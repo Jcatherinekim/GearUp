@@ -1,0 +1,35 @@
+{% load static %}
+<div id="{{ id }}" class="form-control w-full">
+  {% if not no_form %}
+  <form method="GET" action="{% url 'gear:home' %}" class="w-full">
+  {% endif %}
+    <div class="relative flex w-full">
+      <input type="text" 
+             id="{{ id }}-input"
+             name="{{ search_name|default:'search' }}"
+             placeholder="{{ placeholder|default:'Search gear...' }}" 
+             value="{{ search_query|default:'' }}"
+             {% if no_form %}onkeyup="if(typeof on_search === 'function') on_search(this.value)"{% endif %}
+             class="input input-bordered w-full rounded-full pl-10 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" />
+      <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <i class="bi bi-search text-black"></i>
+      </span>
+      {% if filter and not no_form %}
+      <input type="hidden" name="filter" value="{{ filter }}" />
+      {% endif %}
+    </div>
+  {% if not no_form %}
+  </form>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('keydown', function(e) {
+    // Check if Command+K (Mac) or Ctrl+K (Windows) is pressed
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault(); // Prevent default browser behavior
+      const mainSearchInput = document.getElementById('search-input'); // Assuming the main nav search still uses 'search-input' ID
+      if(mainSearchInput) mainSearchInput.focus();
+    }
+  });
+</script>

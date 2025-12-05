@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}
+  Update Profile
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto max-w-4xl p-6">
+    <h1 class="text-3xl font-semibold mb-6">Update Profile</h1>
+    <h2 class="text-xl font-semibold mb-6">Profile Picture</h2>
+    <div class="avatar mb-4">
+        <div class="w-40 rounded-full">
+          <img src="{{ user.userprofile.profile_picture.url }}"/>
+        </div>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="space-y-4">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" data-disable-on-submit class="flex btn btn-success text-lg">Save Changes <i
+        class="bi bi-save ml-2"></i></button>
+    </form>
+</div>
+{% endblock %}

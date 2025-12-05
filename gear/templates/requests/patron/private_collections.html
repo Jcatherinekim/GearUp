@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  My Private Collection Requests
+{% endblock %}
+{% block content %}
+  <div class="container mx-auto max-w-6xl p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">My Private Collection Requests</h1>
+      <div class="stats shadow bg-base-200">
+        <div class="stat">
+          <div class="stat-title">Total Requests</div>
+          <div class="stat-value text-primary text-center">{{ requests|length }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="tabs tabs-boxed mb-6">
+      <button class="tab tab-active" id="tab-pending">Pending <span class="badge badge-warning ml-1">{{ pending_count }}</span></button>
+      <button class="tab" id="tab-approved">Approved <span class="badge badge-success ml-1">{{ approved_count }}</span></button>
+      <button class="tab" id="tab-rejected">Denied <span class="badge badge-error ml-1">{{ rejected_count }}</span></button>
+    </div>
+    <div id="pending-requests" class="request-section">
+      {% if pending_requests %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for req in pending_requests %}
+            {% include 'components/_collection_private_request_card_patron.html' with access_request=req %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <h3 class="text-xl font-semibold text-gray-500">No pending requests</h3>
+          <p class="text-gray-400 mt-2">All your requests have been processed.</p>
+        </div>
+      {% endif %}
+    </div>
+    <div id="approved-requests" class="request-section hidden">
+      {% if approved_requests %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for req in approved_requests %}
+            {% include 'components/_collection_private_request_card_patron.html' with access_request=req %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <h3 class="text-xl font-semibold text-gray-500">No approved requests</h3>
+          <p class="text-gray-400 mt-2">Your approved requests will appear here.</p>
+        </div>
+      {% endif %}
+    </div>
+    <div id="rejected-requests" class="request-section hidden">
+      {% if rejected_requests %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for req in rejected_requests %}
+            {% include 'components/_collection_private_request_card_patron.html' with access_request=req %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <h3 class="text-xl font-semibold text-gray-500">No denied requests</h3>
+          <p class="text-gray-400 mt-2">Good news! None of your requests have been denied.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+{% block extra_js %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const tabs = document.querySelectorAll('.tab')
+      const sections = document.querySelectorAll('.request-section')
+    
+      function showTab(tabId) {
+        // Remove active class from all tabs
+        tabs.forEach((t) => t.classList.remove('tab-active'))
+        // Activate the clicked tab
+        document.getElementById(tabId).classList.add('tab-active')
+        // Hide all request sections
+        sections.forEach((section) => section.classList.add('hidden'))
+        // Determine target section id based on tab id
+        const targetId = tabId.replace('tab-', '')
+        document.getElementById(`${targetId}-requests`).classList.remove('hidden')
+      }
+    
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', function () {
+          showTab(tab.id)
+        })
+      })
+    
+      function showToast(message, tag) {
+        let alertClass
+        if (tag === 'success') {
+          alertClass = 'alert alert-success text-white'
+        } else if (tag === 'error') {
+          alertClass = 'alert alert-error text-white'
+        } else if (tag === 'warning') {
+          alertClass = 'alert alert-warning text-white'
+        } else {
+          alertClass = 'alert alert-info text-white'
+        }
+    
+        let toastContainer = document.querySelector('.toast')
+        if (!toastContainer) {
+          toastContainer = document.createElement('div')
+          toastContainer.className = 'toast toast-bottom toast-end fixed z-50 m-4'
+          document.body.appendChild(toastContainer)
+        }
+    
+        const toastAlert = document.createElement('div')
+        toastAlert.className = alertClass
+        const innerDiv = document.createElement('div')
+        const span = document.createElement('span')
+        span.textContent = message
+        innerDiv.appendChild(span)
+        toastAlert.appendChild(innerDiv)
+        toastContainer.appendChild(toastAlert)
+    
+        setTimeout(() => {
+          toastAlert.remove()
+          if (toastContainer.childElementCount === 0) {
+            toastContainer.remove()
+          }
+        }, 3000)
+      }
+    
+      if (typeof djangoMessages !== 'undefined') {
+        djangoMessages.forEach((message) => {
+          showToast(message.text, message.tags)
+        })
+      }
+    })
+  </script>
+{% endblock %}

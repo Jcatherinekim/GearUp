@@ -1,0 +1,138 @@
+{% load static %}
+<header class="sticky top-0 bg-base-100/80 backdrop-blur z-50 border-b border-base-200">
+  <div class="container mx-auto">
+    <nav class="navbar p-4">
+      <div class="navbar-start w-[200px]">
+        <a href="/" class="flex items-center">
+          <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-12" />
+          <span class="ml-2 text-xl font-bold">GearUp</span>
+        </a>
+      </div>
+
+      <div class="navbar-center flex-grow px-4">
+        <div class="w-full max-w-3xl mx-auto">
+          {% include 'components/_search.html' with id='nav-search' placeholder='Search... | ⌘K' %}
+        </div>
+      </div>
+
+      <div class="navbar-end w-auto flex justify-end">
+        <div class="hidden lg:flex items-center gap-4">
+          {% if user.is_authenticated %}
+            {% if is_patron or not is_librarian %}
+              <a href="{% url 'users:wishlist' %}" class="btn btn-ghost hover:bg-pink-500 hover:text-white text-base">
+                Wishlist
+                <i class="bi bi-heart-fill ml-2"></i>
+              </a>
+            {% endif %}
+            <div class="dropdown dropdown-end">
+              <div class="indicator">
+                <div tabindex="0" role="button" class="btn btn-outline border-none text-base">
+                  Requests<i class="bi bi-files ml-2"></i>
+                </div>
+                {% if notification_count|default:0 > 0 %}
+                  <span class="indicator-item badge badge-xs badge-primary"></span>
+                {% endif %}
+              </div>
+              <ul tabindex="0" class="menu dropdown-content z-[9999] bg-base-100 rounded-box mt-4 w-[16rem] shadow-lg space-y-2">
+                <li>
+                  {% if is_patron %}
+                    <a href="{% url 'users:patron_rentals' %}">Rental Requests<i class="bi bi-headset-vr"></i></a>
+                  {% else %}
+                    <a href="{% url 'users:librarian_rentals' %}">Rental Requests<i class="bi bi-headset-vr"></i></a>
+                  {% endif %}
+                </li>
+                <li>
+                  {% if is_patron %}
+                    <a href="{% url 'users:patron_private_collections' %} ">Private Collection Requests<i class="bi bi-file-earmark-lock"></i></a>
+                  {% else %}
+                    <a href="{% url 'users:librarian_private_collections' %} ">Private Collection Requests<i class="bi bi-file-earmark-lock"></i></a>
+                  {% endif %}
+                </li>
+                {% if is_librarian %}
+                  <li>
+                    <a href="{% url 'gear:librarian_currently_borrowed' %}">Currently Borrowed<i class="bi bi-journal-arrow-down"></i></a>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+
+            {% if is_patron %}
+              <div class="dropdown dropdown-end">
+                <label tabindex="0" class="btn btn-primary text-white text-base">
+                  Create
+                  <i class="bi bi-plus-square"></i>
+                </label>
+                <ul tabindex="0" class="menu dropdown-content z-[9999] bg-base-100 rounded-box mt-4 w-[16rem] shadow-lg space-y-2">
+                  <li class="text-black">
+                    <a href="{% url 'gear:add_collection' %}">Collection<i class="bi bi-collection"></i></a>
+                  </li>
+                </ul>
+              </div>
+            {% endif %}
+
+            {% if is_librarian %}
+              <div class="dropdown dropdown-end">
+                <label tabindex="0" class="btn btn-primary text-white text-base">
+                  Add
+                  <i class="bi bi-plus-square ml-2"></i>
+                </label>
+                <ul tabindex="0" class="menu dropdown-content z-[9999] bg-base-100 rounded-box mt-4 w-[16rem] shadow-lg space-y-2">
+                  <li class="text-black">
+                    <a href="{% url 'gear:add_item' %}">Item<i class="bi bi-headset-vr"></i></a>
+                  </li>
+                  <li class="text-black">
+                    <a href="{% url 'gear:add_collection' %}">Collection<i class="bi bi-collection"></i></a>
+                  </li>
+                  <li class="text-black">
+                    <a href="{% url 'gear:add_library' %}">Library<i class="bi bi-book"></i></a>
+                  </li>
+                  <li class="text-black">
+                    <a href="{% url 'users:add_librarian' %}">Librarians<i class="bi bi-person-fill-add"></i></a>
+                  </li>
+                </ul>
+              </div>
+            {% endif %}
+
+            <div class="dropdown dropdown-end ml-5">
+              <div class="tooltip tooltip-bottom" data-tip="Profile">
+                <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+                  <div class="w-14 rounded-full">
+                    <img src="{{ user.userprofile.profile_picture.url }}" alt="Profile" class="w-10 rounded-full" />
+                  </div>
+                </label>
+              </div>
+              <ul tabindex="0" class="menu dropdown-content z-[9999] bg-base-100 rounded-box mt-4 w-[10rem] shadow-lg space-y-2">
+                <li class="bg-accent text-white rounded-xl">
+                  <a href="{% url 'users:profile' %} ">Profile<i class="bi bi-person-circle"></i></a>
+                </li>
+                {% if is_patron %}
+                  <li class="bg-primary text-white rounded-xl">
+                    <a href="{% url 'gear:patron_borrowing_history' %}">My Items<i class="bi bi-headset-vr"></i></a>
+                  </li>
+                {% endif %}
+                <li class="bg-red-500 text-white rounded-xl">
+                  <a href="{% url 'users:logout' %}">Logout<i class="bi bi-box-arrow-left"></i></a>
+                </li>
+              </ul>
+            </div>
+          {% else %}
+            <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn bg-transparent border-none shadow-none hover:bg-base-200 flex items-center text-base">
+              <img src="{% static 'images/google_logo.png' %}" alt="Logo" class="h-4" />
+              <span class="font-bold">Log In</span>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<script>
+  document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault()
+      const inp = document.getElementById('nav-search-input')
+      if (inp) inp.focus()
+    }
+  })
+</script>

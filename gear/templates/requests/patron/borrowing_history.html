@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load tz %}
+
+{% block title %}
+  My Borrowing History
+{% endblock %}
+
+{% block content %}
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">My Borrowing History</h1>
+
+    <!-- Currently Borrowed Section -->
+    <div class="mb-10">
+      <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Currently Borrowed Items</h2>
+      {% if currently_borrowed %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {# Iterate through grouped items #}
+          {% for group in currently_borrowed %}
+            <div>
+              {# Wrapper div for card + info #}
+              {% include 'components/_currently_borrowing_item_card.html' with item=group.item group=group %}
+              <div class="mt-2 text-center text-xs text-gray-500 space-y-1">
+                <div>Borrowed Since: {{ group.earliest_borrowed|localtime|date:'M d, Y' }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative" role="alert">
+          <strong class="font-bold">No items currently borrowed.</strong>
+          <span class="block sm:inline">Go find something cool to borrow!</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Returned Items Section -->
+    <div>
+      <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Returned Items</h2>
+      {% if returned_items %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {# Iterate through grouped items #}
+          {% for group in returned_items %}
+            <div>
+              {# Wrapper div for card + info #}
+              {% include 'components/_item_card.html' with item=group.item %}
+              <div class="mt-2 text-center text-xs text-gray-500 space-y-1">
+                {% if group.count > 1 %}
+                  <div>Quantity Returned: {{ group.count }}</div>
+                {% endif %}
+                <div>Last Returned On: {{ group.latest_returned|localtime|date:'M d, Y' }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="bg-gray-100 border border-gray-300 text-gray-700 px-4 py-3 rounded relative" role="alert">
+          <span class="block sm:inline">You haven't returned any items yet.</span>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

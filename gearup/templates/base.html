@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="customtheme" class="h-full">
+  <head>
+    {% load static %}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}
+        GearUp
+      {% endblock %}
+    </title>
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}" />
+    <link href="{% static 'bootstrap-icons/font/bootstrap-icons.css' %}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet" />
+    <link href="{% static 'css/site.css' %}" rel="stylesheet" />
+    <link href="{% static 'tailwind/daisyui.css' %}" rel="stylesheet" />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    {% include 'components/nav.html' %}
+
+    {% if messages %}
+  <div class="toast toast-bottom toast-end fixed z-50 m-4">
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+        <div class="alert alert-success text-white">
+      {% elif message.tags == 'error' %}
+        <div class="alert alert-error text-white">
+      {% elif message.tags == 'warning' %}
+        <div class="alert alert-warning text-white">
+      {% else %}
+        <div class="alert alert-info text-white">
+      {% endif %}
+          <div>
+            <span>{{ message }}</span>
+          </div>
+        </div>
+    {% endfor %}
+  </div>
+    {% endif %}
+
+    <main class="flex-1 min-h-screen">
+      <div class="container mx-auto px-4 py-6">
+        {% block content %}
+
+        {% endblock %}
+      </div>
+    </main>
+    {% include 'components/footer.html' %}
+    {% block scripts %}
+      <script src="{% static 'js/site.js' %}"></script>
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          initDisableOnSubmit('form.disable-on-submit', '[data-disable-on-submit]')
+        
+          const toast = document.querySelector('.toast')
+          if (toast) {
+            setTimeout(() => {
+              toast.remove()
+            }, 3000)
+          }
+        })
+      </script>    
+      {% block extra_js %}
+      {% endblock %}
+    {% endblock %}
+  </body>
+</html>

@@ -1,0 +1,82 @@
+{% load static %}
+{% load tz %}
+<div class="relative card bg-base-100 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col h-full">
+  <a href="{% url 'gear:collection_detail' access_request.collection.id %}" class="flex-grow">
+    <figure class="aspect-[4/3] bg-gray-100 overflow-hidden relative flex items-center justify-center">
+      <img src="{{ access_request.collection.image.url }}" alt="{{ access_request.collection.title }}" class="max-w-full max-h-full object-contain" />
+      <div class="absolute top-4 left-4">
+        {% if access_request.status == 'pending' %}
+          <span class="badge badge-warning text-xs font-medium">Pending</span>
+        {% elif access_request.status == 'approved' %}
+          <span class="badge badge-success text-xs font-medium">Approved</span>
+        {% elif access_request.status == 'rejected' %}
+          <span class="badge badge-error text-xs font-medium">Denied</span>
+        {% endif %}
+      </div>
+    </figure>
+    <div class="card-body p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex justify-between items-start mb-2">
+          <div class="badge badge-outline text-xs font-bold text-primary border-primary">Collection Request</div>
+          <div class="text-sm text-gray-500">{{ access_request.request_date|localtime|date:'M d, Y g:i A' }}</div>
+        </div>
+        <h2 class="card-title text-lg font-bold mb-2">{{ access_request.collection.title }}</h2>
+        <p class="text-sm text-gray-600 mb-1">Patron: {{ access_request.patron.name }}</p>
+        {% if access_request.status == 'approved' %}
+          <p class="text-sm text-success">
+            <i class="bi bi-check-circle mr-1"></i>Approved on: {{ access_request.approved_date|date:'M d, Y' }}
+          </p>
+          <p class="text-sm text-gray-600">Approved by: {{ access_request.approved_by.name }}</p>
+        {% elif access_request.status == 'rejected' %}
+          <p class="text-sm text-error">
+            <i class="bi bi-x-circle mr-1"></i>Denied on: {{ access_request.request_date|localtime|date:'M d, Y g:i A' }}
+          </p>
+          <p class="text-sm text-gray-600">Denied by: {{ access_request.approved_by.name }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </a>
+
+  {% if access_request.status == 'pending' %}
+    <div class="card-actions justify-end p-4 border-t border-gray-100">
+      <label for="approve-modal-{{ access_request.id }}" class="btn bg-white text-success border-success btn-sm hover:text-white hover:bg-success">Approve <i class="bi bi-hand-thumbs-up"></i></label>
+      <label for="deny-modal-{{ access_request.id }}" class="btn bg-white text-error border-error btn-sm hover:text-white hover:bg-error">Deny <i class="bi bi-hand-thumbs-down"></i></label>
+    </div>
+
+    <input type="checkbox" id="approve-modal-{{ access_request.id }}" class="modal-toggle" />
+    <div class="modal">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Approve Private Collection Request</h3>
+        <p class="py-4">
+          Are you sure you want to approve the request for <strong>{{ access_request.collection.title }}</strong> by {{ access_request.patron.name }}?
+        </p>
+        <div class="modal-action">
+          <label for="approve-modal-{{ access_request.id }}" class="btn btn-outline">Cancel</label>
+          <form method="POST" action="{% url 'users:approve_private_collection_request' access_request.id %}" class="approve-request-form disable-on-submit">
+            {% csrf_token %}
+            <button data-disable-on-submit type="submit" class="btn bg-white text-success border-success hover:text-white hover:bg-success">Approve Request <i class="bi bi-hand-thumbs-up"></i></button>
+          </form>
+        </div>
+      </div>
+      <label class="modal-backdrop" for="approve-modal-{{ access_request.id }}"></label>
+    </div>
+
+    <input type="checkbox" id="deny-modal-{{ access_request.id }}" class="modal-toggle" />
+    <div class="modal">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Deny Private Collection Request</h3>
+        <p class="py-4">
+          Are you sure you want to deny the request for <strong>{{ access_request.collection.title }}</strong> by {{ access_request.patron.name }}?
+        </p>
+        <div class="modal-action">
+          <label for="deny-modal-{{ access_request.id }}" class="btn btn-outline">Cancel</label>
+          <form method="POST" action="{% url 'users:deny_private_collection_request' access_request.id %}" class="deny-request-form disable-on-submit">
+            {% csrf_token %}
+            <button data-disable-on-submit type="submit" class="btn bg-red-500 text-white hover:bg-red-600">Deny Request <i class="bi bi-hand-thumbs-down"></i></button>
+          </form>
+        </div>
+      </div>
+      <label class="modal-backdrop" for="deny-modal-{{ access_request.id }}"></label>
+    </div>
+  {% endif %}
+</div>

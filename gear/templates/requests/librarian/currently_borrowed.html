@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load tz %}
+
+{% block title %}
+  Currently Borrowed Items
+{% endblock %}
+
+{% block content %}
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Currently Borrowed Items</h1>
+
+    {# Regroup the pre-grouped items by patron #}
+    {% regroup grouped_borrowed_items by patron as items_by_patron %}
+
+    {% if items_by_patron %}
+      <div class="space-y-8">
+        {% for patron_group in items_by_patron %}
+          <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="bg-gray-100 px-6 py-3 border-b border-gray-200">
+              <h2 class="text-lg font-semibold text-gray-800">{{ patron_group.grouper.name }} <span class="text-sm text-gray-600">({{ patron_group.grouper.email }})</span></h2>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 table-fixed">
+                <colgroup>
+                  {# Adjust column widths for new columns #}
+                  <col style="width: 25%;" /> {# Item Title #}
+                  <col style="width: 10%;" /> {# Privacy #}
+                  <col style="width: 15%;" /> {# Collection #}
+                  <col style="width: 10%;" /> {# Quantity #}
+                  <col style="width: 20%;" /> {# Borrowed On #}
+                  <col style="width: 20%;" /> {# Return Action #}
+                </colgroup>
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Title</th>
+                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Privacy</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Collection</th>
+                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th> {# Shortened Header #}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Borrowed On</th> {# Shortened Header #}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Return Action</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  {# Iterate through the items list for this patron group #}
+                  {% for group in patron_group.list %}
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                          {% if group.item.get_first_image %}
+                            <img src="{{ group.item.get_first_image }}" alt="{{ group.item.title }}" class="w-10 h-10 object-cover rounded mr-2" />
+                          {% endif %}
+                          <a href="{% url 'gear:item_detail' group.item.id %}" class="text-indigo-600 hover:text-indigo-900 font-medium truncate" title="{{ group.item.title }}">{{ group.item.title }}</a>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-center">
+                        {% if group.item.is_private %}
+                          <span class="badge badge-sm badge-neutral">Private</span>
+                        {% endif %}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-xs overflow-hidden text-ellipsis">
+                        {% with collections_count=group.item.collections.count %}
+                          {% if collections_count == 1 %}
+                            {% with collection=group.item.collections.first %}
+                              <div class="badge badge-sm badge-info badge-outline truncate" title="{{ collection.title }}">
+                                <i class="bi bi-collection mr-1"></i> <span class="truncate">{{ collection.title }}</span>
+                              </div>
+                            {% endwith %}
+                          {% elif collections_count > 1 %}
+                            <div class="badge badge-sm badge-outline text-yellow-600 border-yellow-600 truncate" title="Item belongs to {{ collections_count }} collections">
+                              <i class="bi bi-collection-fill mr-1"></i> Many ({{ collections_count }})
+                            </div>
+                          {% else %}
+                            <span class="text-gray-400 italic">None</span>
+                          {% endif %}
+                        {% endwith %}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{{ group.count }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.earliest_borrowed|localtime|date:'M d, Y P' }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <form method="POST" action="{% url 'gear:librarian_return_items' %}" class="flex items-center gap-2 disable-on-submit">
+                          {% csrf_token %}
+                          <input type="hidden" name="patron_id" value="{{ patron_group.grouper.id }}" />
+                          <input type="hidden" name="item_id" value="{{ group.item.id }}" />
+                          <input type="number" name="quantity" value="1" min="1" max="{{ group.count }}" class="input input-bordered input-sm w-16" aria-label="Quantity to return" required />
+                          <button data-disable-on-submit type="submit" class="btn bg-white text-success border-success btn-sm hover:text-white hover:bg-success">Item Returned <i class="bi bi-hand-thumbs-up"></i></button>
+                        </form>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative" role="alert">
+        <strong class="font-bold">No items currently borrowed.</strong>
+        <span class="block sm:inline">All items are currently available or accounted for.</span>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

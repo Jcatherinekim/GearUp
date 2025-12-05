@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Add Item
+{% endblock %}
+
+{% block content %}
+  <div class="container mx-auto max-w-4xl p-6">
+    <h1 class="text-3xl font-semibold mb-6">Add Item</h1>
+    <form method="POST" id="item-form" enctype="multipart/form-data" class="space-y-6 disable-on-submit">
+      {% csrf_token %}
+      <div class="space-y-4">
+        {{ form.title }}
+        {{ form.location }}
+        {{ form.description }}
+        <div class="mb-4 w-1/6">{{ form.quantity }}</div>
+        <label for="{{ form.images.id_for_label }}" class="block text-lg font-medium text-gray-700 mb-2">Item Image(s)</label>
+        <div>{{ form.images }}</div>
+      </div>
+      <div class="flex justify-end">
+        <button id="submit-button" type="submit" data-disable-on-submit class="flex btn btn-success text-lg">Submit<i class="bi bi-send-plus-fill"></i></button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

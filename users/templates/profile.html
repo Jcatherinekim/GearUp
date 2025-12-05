@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container mx-auto max-w-4xl p-6">
+  <div class="flex items-center space-x-8">
+    <div class="relative inline-block">
+      <div class="avatar">
+        <div class="w-64 h-64 rounded-full overflow-hidden">
+          <img src="{{ user.userprofile.profile_picture.url }}" alt="Profile Picture" class="object-cover w-full h-full" />
+        </div>
+      </div>
+    
+      <a href="{% url 'users:update_profile' %}" class="absolute top-2 right-2 bg-white text-black rounded-full p-2 shadow-md hover:bg-black hover:text-white transition-all duration-300">
+        <i class="bi bi-pencil text-xl"></i>
+      </a>
+    </div>
+    <div>
+      <h1 class="text-4xl font-semibold pl-10"> {{ user.userprofile.name }} </h1>
+      <p class="text-sm text-gray-500 mt-2 pl-10">Joined on {{ user.date_joined|date:"F j, Y" }}</p>
+      {% if request.user == user or is_librarian %}
+      <p class="text-sm text-gray-500 mt-2 pl-10">Email: {{ user.email }}</p>
+      {% endif %}
+      <div class="pl-10 mt-1">
+        <div class="badge badge-outline text-xs font-bold text-primary border-blue-300">
+          {% if is_librarian %}
+            Librarian
+          {% elif is_patron %}
+            Patron
+          {% else %}
+          {% endif %}
+        </div>
+      </div>     
+      </div>
+    </div>
+  </div>
+
+  {% if is_patron %}
+  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    <h2 class="text-2xl font-semibold mb-6">My Collections</h2>
+
+    {% if collections %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {% for collection in collections %}
+        <div class="collection-card">
+          {% include 'components/_collection_card.html' with collection=collection %}
+        </div>
+      {% empty %}
+        <p class="text-gray-500">You haven't created any collections yet.</p>
+      {% endfor %}
+    </div>
+    {% else %}
+      <p class="text-gray-500">You haven't created any collections yet.</p>
+      <button class="btn btn-primary mt-4">
+        <a href="{% url 'gear:add_collection' %}">Create a Collection</a>
+      </button>
+    {% endif %}
+    
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

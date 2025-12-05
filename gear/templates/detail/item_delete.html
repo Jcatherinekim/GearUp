@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-8 text-center">
+  <h1 class="text-2xl font-bold mb-4">Confirm Deletion</h1>
+  <p>Are you sure you want to delete <strong>{{ item.title }}</strong>?</p>
+
+  <form id="delete-form" method="post" data-item-id="{{ item.id }}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-error">Yes, Delete</button>
+    <a href="#" onclick="closeModal()" class="btn btn-secondary ml-2">Cancel</a>
+  </form>
+</div>
+
+
+<div class="toast toast-top toast-center hidden" id="toast-message">
+  <div class="alert alert-success">
+    <span>Item successfully deleted!</span>
+  </div>
+</div>
+
+<script>
+  function closeModal() {
+    window.history.back();
+  }
+
+  document.getElementById('delete-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    fetch(window.location.href, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        'Accept': 'application/json',
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        showToast('Item successfully deleted!');
+        setTimeout(() => {
+          window.location.href = '{% url "gear:home" %}'; // redirect to home after toast
+        }, 1500);
+      } else {
+        showToast('Failed to delete item.', true);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showToast('Something went wrong.', true);
+    });
+  });
+
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('toast-message');
+    toast.querySelector('span').textContent = message;
+    if (isError) {
+      toast.querySelector('.alert').classList.remove('alert-success');
+      toast.querySelector('.alert').classList.add('alert-error');
+    } else {
+      toast.querySelector('.alert').classList.remove('alert-error');
+      toast.querySelector('.alert').classList.add('alert-success');
+    }
+    toast.classList.remove('hidden');
+  }
+</script>
+{% endblock %}

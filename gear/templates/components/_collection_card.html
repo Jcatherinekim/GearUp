@@ -1,0 +1,43 @@
+{% load gear_filters %}
+<a href="{% url 'gear:collection_detail' collection.id %}" class="card bg-base-100 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full">
+  <figure class="aspect-[4/3] bg-gray-100 overflow-hidden relative flex items-center justify-center">
+    <img src="{{ collection.image.url }}" alt="{{ collection.title }}" class="max-w-full max-h-full object-contain rounded-xl" />
+    <div class="absolute top-4 left-4 flex gap-2">
+      {% if not collection.has_available_items and collection.items.count > 0 %}
+        <div class="badge badge-error text-xs font-medium">Rented out</div>
+      {% elif collection.has_available_items %}
+        <div class="badge badge-success text-xs font-medium text-white">Items Available</div>
+      {% endif %}
+    </div>
+    <div class="absolute bottom-4 left-4">
+      {% if collection.is_private %}
+        <div style="background-color: black; border: 1px solid black;" class="badge text-white text-xs font-medium px-[9px] py-[2px] font-['Inter']">Private</div>
+      {% else %}
+        <div class="badge !bg-[#FFFFFF] !text-[#000000] text-xs font-medium px-[9px] py-0 font-['Inter'] border border-[#000000]">Public</div>
+      {% endif %}
+    </div>
+  </figure>
+
+  <div class="card-body p-6 flex flex-col justify-between">
+    <div>
+      <div class="flex justify-between items-start mb-2">
+        <div class="badge badge-outline text-xs font-bold text-primary border-blue-300">Collection</div>
+        <div class="text-xs text-gray-500">{{ collection.items.count }} items</div>
+      </div>
+
+      <h2 class="text-lg font-bold mb-2 truncate">{{ collection.title }}</h2>
+      <p class="text-sm text-gray-600 mb-3 truncate">{{ collection.description }}</p>
+    </div>
+
+    <div class="mt-4 text-xs">
+      <div class="flex items-center">
+        {% if collection.creator.profile_picture %}
+          <img src="{{ collection.creator.profile_picture.url }}" alt="{{ collection.creator_text }}" class="w-5 h-5 rounded-full mr-1">
+        {% else %}
+          <i class="bi bi-person-circle text-primary mr-1"></i>
+        {% endif %}
+        {{ collection.creator_text }}
+      </div>
+    </div>
+  </div>
+</a>

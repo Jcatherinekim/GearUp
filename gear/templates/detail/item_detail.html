@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Item Details
+{% endblock %}
+
+{% block content %}
+  <h1 class="text-2xl font-bold text-gray-700 mb-4 px-10 pt-10">Item Details</h1>
+  <div class="w-full flex flex-col md:flex-row items-center justify-center px-10 py-10 gap-8">
+    <div class="w-full md:w-1/2 flex justify-center">
+      <div class="w-full h-96 relative rounded-lg overflow-hidden">
+        <!-- Arrow buttons for navigation -->
+        <button id="prevButton" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full z-10">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        
+        <div id="imageContainer" class="flex transition-transform duration-300 h-full">
+          <!-- This will be populated with images via JavaScript -->
+          {% for image in item.images.all %}
+            <div class="min-w-full h-full flex items-center justify-center">
+              <img class="object-contain max-h-full max-w-full p-4" src="{{ image.image.url }}" alt="{{ item.title }}" />
+            </div>
+          {% endfor %}
+        </div>
+        
+        <button id="nextButton" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full z-10">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+        
+        <!-- Optional: Add indicators -->
+        <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+          {% for image in item.images.all %}
+            <button data-index="{{ forloop.counter0 }}" class="carousel-indicator w-2 h-2 rounded-full bg-white bg-opacity-50 hover:bg-opacity-100"></button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full md:w-1/2">
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title text-3xl font-bold text-gray-900">{{ item.title }}</h2>
+          <p class="text-gray-600 mt-2 break-words whitespace-normal">{{ item.description }}</p>
+
+          <div class="mt-4">
+            <p class="text-lg font-semibold">
+              Location:
+              <span class="badge text-white {% if item.location == 'online' %}badge-info{% else %}badge-success{% endif %}">
+                {{ item.get_location_display }}
+              </span>
+            </p>
+            <p class="text-lg font-semibold mt-2">
+              Status:
+              <span class="badge text-white {% if item.status == 'available' %}badge-success{% else %}badge-error{% endif %}">
+                {{ item.get_status_display }}
+              </span>
+            </p>
+            {% if collections %}
+            <p class="text-lg font-semibold mt-2">
+              Collection:
+              {% for collection in collections %}
+                <span class="badge {% if collection.is_private %}badge-error text-white{% else %}badge-success text-white{% endif %}">
+                  {{ collection.title }} - {% if collection.is_private %}Private{% else %}Public{% endif %}
+                </span>
+              {% endfor %}
+            </p>
+          {% endif %}
+
+            <p class="text-lg font-semibold mt-2">Quantity: {{ item.available_quantity }}</p>
+            
+            <p class="text-lg font-semibold mt-2">
+              Rating: 
+              <span class="inline-flex items-center">
+                {{ item.current_rating|floatformat:1 }}/5
+                <div class="rating rating-sm ml-2">
+                  {% for i in "12345" %}
+                    {% with counter=forloop.counter|stringformat:"s" %}
+                      {% with current_rating=item.current_rating|floatformat:"0" %}
+                        <input type="radio" name="item-rating-preview" class="mask mask-star-2 bg-orange-400" disabled {% if counter|add:"0"|add:0 <= current_rating|add:"0"|add:0 %}checked{% endif %} />
+                      {% endwith %}
+                    {% endwith %}
+                  {% endfor %}
+                </div>
+                <span class="text-sm text-gray-500 ml-2">({{ item.reviews.count }} reviews)</span>
+              </span>
+            </p>
+          </div>
+
+          <div class="flex mt-6 w-full">
+            {% if request.user.is_authenticated %}
+              {% if request.user.userprofile.user_type == 'patron' %}
+             
+                <div>
+                  <form action="{% url 'users:request_rent_item' item.id %}" method="POST" class="disable-on-submit">
+                    {% csrf_token %}
+                    {{ rental_form.quantity }}
+                    <button data-disable-on-submit type="submit" class="btn btn-success text-lg">
+                      Rent <i class="bi bi-rocket-takeoff"></i>
+                    </button>
+                  </form>
+                </div>
+                <div class="ml-auto flex space-x-2">
+                  <form action="{% url 'users:add_to_wishlist' item.id %}" method="POST" class="disable-on-submit">
+                    {% csrf_token %}
+                    <button data-disable-on-submit type="submit" class="btn bg-neutral-600 hover:bg-pink-500 text-white text-lg">
+                      <i class="bi bi-heart-fill"></i>
+                    </button>
+                  </form>
+                  <label for="review-modal" class="btn btn-neutral text-white text-lg">
+                     Review <i class="bi bi-star-fill me-1"></i>
+                  </label>
+                </div>
+              {% elif request.user.userprofile.user_type == 'librarian' %}
+                <div>
+                  <a href="{% url 'gear:item_edit' item.id %}" class="btn btn-warning text-lg">Edit<i class="bi bi-pencil-square"></i></a>
+                  <label for="delete-modal-{{ item.id }}" class="btn btn-error text-lg cursor-pointer">Delete<i class="bi bi-trash"></i></label>
+                </div>
+              {% endif %}
+            {% endif %}
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-full px-10 py-6">
+    <h3 class="text-2xl font-bold mb-4">Reviews</h3>
+    {% if reviews %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for review in reviews %}
+          <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+              <div class="flex items-center justify-between">
+                <h4 class="font-semibold">{{ review.user.name }}</h4>
+                <div class="rating rating-sm">
+                  {% for i in "12345" %}
+                    <input type="radio" name="rating-{{ review.id }}" class="mask mask-star-2 bg-orange-400" disabled {% if forloop.counter <= review.rating %}checked{% endif %} />
+                  {% endfor %}
+                </div>
+              </div>
+              <p class="text-gray-600 mt-2">{{ review.comment }}</p>
+              <p class="text-xs text-gray-400 mt-2">{{ review.created_at|date:"F j, Y" }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-dark">
+        <span>No reviews yet. Be the first to leave a review!</span>
+      </div>
+    {% endif %}
+  </div>
+
+  <input type="checkbox" id="review-modal" class="modal-toggle" />
+  <div class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg">Leave a Review for "{{ item.title }}"</h3>
+      <form method="POST" action="{% url 'users:leave_review' item.id %}" class="py-4 disable-on-submit">
+        {% csrf_token %}
+        <div class="form-control mb-4">
+          <label class="label">
+            <span class="label-text font-semibold">Your Rating</span>
+          </label>
+          <div class="rating rating-lg">
+            <input type="radio" name="rating" value="1" class="mask mask-star-2 bg-orange-400" />
+            <input type="radio" name="rating" value="2" class="mask mask-star-2 bg-orange-400" />
+            <input type="radio" name="rating" value="3" class="mask mask-star-2 bg-orange-400" />
+            <input type="radio" name="rating" value="4" class="mask mask-star-2 bg-orange-400" />
+            <input type="radio" name="rating" value="5" class="mask mask-star-2 bg-orange-400" />
+          </div>
+          <label class="label">
+            <span class="label-text-alt text-gray-500">Click to select your rating (1-5 stars)</span>
+          </label>
+        </div>
+        {{ form.rating.as_hidden }}
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Your Comment</span>
+          </label>
+          <textarea name="comment" class="textarea textarea-bordered" placeholder="Write your review here..."></textarea>
+        </div>
+        <div class="modal-action">
+          <label for="review-modal" class="btn btn-outline">Cancel</label>
+          <button data-disable-on-submit="" type="submit" class="btn btn-primary">Submit Review<i class="bi bi-send"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+    <label class="modal-backdrop" for="review-modal"></label>
+  </div>
+
+  <input type="checkbox" id="delete-modal-{{ item.id }}" class="modal-toggle" />
+  <div class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg">Delete "{{ item.title }}"?</h3>
+      <p class="py-4 text-gray-600">This action cannot be undone.</p>
+      <div class="modal-action">
+        <label for="delete-modal-{{ item.id }}" class="btn btn-outline">Cancel</label>
+        <form method="POST" action="{% url 'gear:item_delete' item.id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-error">Yes, Delete<i class="bi bi-trash"></i></button>
+        </form>
+      </div>
+    </div>
+    <label class="modal-backdrop" for="delete-modal-{{ item.id }}"></label>
+  </div>
+
+  <div class="mt-8">
+    <h3 class="text-xl font-semibold mb-3">Part of Collections</h3>
+    <div class="bg-base-100 rounded-lg shadow p-4 border border-gray-200">
+      {% if item.collections.all %}
+        <ul class="space-y-2">
+          {% for collection in item.collections.all %}
+            <li class="flex justify-between items-center">
+              <a href="{% url 'gear:collection_detail' collection.id %}" class="text-blue-600 hover:underline">{{ collection.title }}</a>
+              {% if collection.is_private %}
+                <span class="badge badge-sm badge-neutral">Private</span>
+              {% else %}
+                <span class="badge badge-sm badge-success badge-outline">Public</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-gray-500">This item is not part of any collection.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const container = document.getElementById('imageContainer');
+      const prevButton = document.getElementById('prevButton');
+      const nextButton = document.getElementById('nextButton');
+      const indicators = document.querySelectorAll('.carousel-indicator');
+      
+      let currentIndex = 0;
+      const totalImages = container.children.length;
+      
+      if (totalImages <= 1) {
+        prevButton.classList.add('hidden');
+        nextButton.classList.add('hidden');
+      }
+      
+      function updateIndicators() {
+        indicators.forEach((indicator, idx) => {
+          if (idx === currentIndex) {
+            indicator.classList.add('bg-opacity-100');
+          } else {
+            indicator.classList.remove('bg-opacity-100');
+          }
+        });
+      }
+      
+      updateIndicators();
+      
+      prevButton.addEventListener('click', function() {
+        currentIndex = (currentIndex - 1 + totalImages) % totalImages;
+        container.style.transform = `translateX(-${currentIndex * 100}%)`;
+        updateIndicators();
+      });
+      
+      nextButton.addEventListener('click', function() {
+        currentIndex = (currentIndex + 1) % totalImages;
+        container.style.transform = `translateX(-${currentIndex * 100}%)`;
+        updateIndicators();
+      });
+      
+      indicators.forEach((indicator, idx) => {
+        indicator.addEventListener('click', function() {
+          currentIndex = idx;
+          container.style.transform = `translateX(-${currentIndex * 100}%)`;
+          updateIndicators();
+        });
+      });
+    });
+  </script>
+
+{% endblock %}
+
+
+  
+  
+

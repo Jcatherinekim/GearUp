@@ -1,0 +1,62 @@
+{% load static %}
+{% load tz %}
+
+<div class="relative">
+  <a href="{% url 'gear:item_detail' request.item.id %}" class="card bg-base-100 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full">
+    <figure class="aspect-[4/3] bg-gray-100 overflow-hidden relative flex items-center justify-center">
+      <img src="{{ request.item.get_first_image }}" alt="{{ request.item.title }}" class="max-w-full max-h-full object-contain" />
+      <div class="absolute top-4 left-4">
+        {% if request.status == 'pending' %}
+          <span class="badge badge-warning text-xs font-medium">Pending</span>
+        {% elif request.status == 'approved' %}
+          <span class="badge badge-success text-xs font-medium text-white">Approved</span>
+        {% elif request.status == 'rejected' %}
+          <span class="badge badge-error text-xs font-medium">Denied</span>
+        {% endif %}
+      </div>
+    </figure>
+    <div class="card-body p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex justify-between items-start mb-2">
+          <div class="badge badge-outline text-xs font-bold text-success border-emerald-200">Rental Request</div>
+          <div class="text-sm text-gray-500">{{ request.request_date|localtime|date:'M d, Y g:i A' }}</div>
+        </div>
+        <h2 class="card-title text-lg font-bold mb-2">{{ request.item.title }}</h2>
+        <p class="text-sm text-gray-600 mb-3">Quantity: {{ request.quantity }}</p>
+        {% if request.status == 'approved' %}
+          <p class="text-sm text-success">
+            <i class="bi bi-check-circle mr-1"></i>Approved on: {{ request.approved_date|date:'M d, Y' }}
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  </a>
+  {% if request.status == 'pending' %}
+    <div class="absolute bottom-4 right-4 z-50">
+      <label for="cancel-modal-{{ request.id }}" class="btn btn-outline btn-error btn-sm hover:text-white" onclick="event.stopPropagation()">Cancel</label>
+      <input type="checkbox" id="cancel-modal-{{ request.id }}" class="modal-toggle" />
+      <div class="modal">
+        <div class="modal-box">
+          <h3 class="font-bold text-lg">Cancel Rental Request</h3>
+          <p class="py-4">Are you sure you want to cancel your request for {{ request.quantity }} {{ request.item.title }}?</p>
+          <div class="modal-action">
+            <label for="cancel-modal-{{ request.id }}" class="btn btn-outline">Keep Request</label>
+            <form method="POST" action="{% url 'users:cancel_rental_request' request.id %}" class="cancel-request-form disable-on-submit">
+              {% csrf_token %}
+              <button data-disable-on-submit type="submit" class="btn bg-red-500 text-white hover:bg-red-600">Cancel Request</button>
+            </form>
+          </div>
+        </div>
+        <label class="modal-backdrop" for="cancel-modal-{{ request.id }}"></label>
+      </div>
+    </div>
+  {% elif request.status == 'rejected' %}
+    <div class="absolute bottom-4 right-4 z-10">
+      <form action="{% url 'users:request_rent_item' request.item.id %}" method="POST" style="display:inline;" class="disable-on-submit">
+        {% csrf_token %}
+        <input type="hidden" name="quantity" value="{{ request.quantity }}" />
+        <button data-disable-on-submit type="submit" class="btn btn-success text-lg">Request Again <i class="bi bi-rocket-takeoff"></i></button>
+      </form>
+    </div>
+  {% endif %}
+</div>

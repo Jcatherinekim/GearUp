@@ -1,0 +1,24 @@
+{% load gear_filters %}
+
+<div class="container mx-auto px-4">
+  {% include 'components/_filter_menu.html' %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-10">
+    {% for gear in all_gear %}
+      {% if gear|isinstance:'Item' %}
+        {% include 'components/_item_card.html' with item=gear %}
+      {% elif gear|isinstance:'Collection' %}
+        {% include 'components/_collection_card.html' with collection=gear %}
+      {% elif gear|isinstance:'Library' %}
+        {% include 'components/_library_card.html' with library=gear %}
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {% if all_gear|length == 0 %}
+    <div class="text-center py-12">
+      <p class="text-gray-500 text-lg">No items found with the selected filters.</p>
+      <a href="{% url 'gear:home' %}" class="mt-4 btn btn-secondary text-white px-4 font-bold">Clear Filters</a>
+    </div>
+  {% endif %}
+</div>

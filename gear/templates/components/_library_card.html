@@ -1,0 +1,35 @@
+{% load gear_filters %}
+
+<a href="{% url 'gear:library_detail' library.id %}" class="card bg-base-100 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full">
+  <figure class="aspect-[4/3] bg-gray-100 overflow-hidden relative flex items-center justify-center">
+    <img src="{{ library.image.url }}" alt="{{ library.title }}" class="max-w-full max-h-full object-contain rounded-xl" />
+    <div class="absolute top-4 left-4 flex gap-2">
+      {% if not library.has_available_items %}
+         {% if library.items.count > 0 or library.collections.count > 0 %}
+            <div class="badge badge-error text-xs font-medium">Rented out</div>
+         {% endif %}
+      {% elif library.has_available_items %}
+        <div class="badge badge-success text-xs font-medium text-white">Items Available</div>
+      {% endif %}
+    </div>
+  </figure>
+
+  <div class="card-body p-6 flex flex-col justify-between">
+    <div>
+      <div class="flex justify-between items-start mb-2">
+        <div class="badge badge-outline text-xs font-bold text-indigo-600 border-indigo-300">Library</div>
+        <div class="text-xs text-gray-500">{{ library.collections.count }} collections</div>
+      </div>
+
+      <h2 class="text-lg font-bold mb-2 truncate">{{ library.title }}</h2>
+      <p class="text-sm text-gray-600 mb-3 truncate">{{ library.description }}</p>
+    </div>
+
+    <div class="mt-4 text-xs">
+      <div class="flex items-center">
+        <i class="bi bi-person text-indigo-600 mr-1"></i>
+        Updated {{ library.updated_at|date:'M d, Y' }}
+      </div>
+    </div>
+  </div>
+</a>

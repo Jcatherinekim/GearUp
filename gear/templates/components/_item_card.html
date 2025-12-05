@@ -1,0 +1,118 @@
+{% load gear_filters %}
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+<div class="relative">
+  <a href="{% url 'gear:item_detail' item.id %}" class="card bg-base-100 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full">
+    <figure class="aspect-[4/3] bg-gray-100 overflow-hidden relative flex items-center justify-center">
+      <img src="{{ item.get_first_image }}" alt="{{ item.title }}" class="max-w-full max-h-full object-contain" />
+      {% if item.available_quantity <= 0 %}
+        <div class="absolute top-4 left-4 badge badge-error text-xs font-medium">Rented Out</div>
+      {% elif item.available_quantity > 0 %}
+        <div class="absolute top-4 left-4 badge badge-success text-xs font-medium text-white">Available</div>
+      {% endif %}
+    </figure>
+
+    <div class="card-body p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex justify-between items-start mb-2">
+          <div class="flex items-center gap-2">
+            <div class="badge badge-outline text-xs font-bold text-success border-emerald-200">Item</div>
+            {% if item.is_private %}
+              <div class="badge badge-sm badge-neutral">Private</div>
+            {% endif %}
+          </div>
+          <div class="flex items-center">
+            <span class="text-yellow-500 mr-1"><i class="bi bi-star-fill"></i></span>
+            <span class="text-sm font-medium">{{ item.current_rating }}</span>
+          </div>
+        </div>
+
+        <h2 class="text-lg font-bold mb-2 truncate">{{ item.title }}</h2>
+        <p class="text-sm text-gray-600 mb-3 truncate">{{ item.description }}</p>
+        <div class="flex flex-wrap gap-1 mb-2 min-h-[20px]">
+          {% with collections_count=item.collections.count %}
+            {% if collections_count == 1 %}
+              {% with collection=item.collections.first %}
+                <div class="badge badge-sm badge-info badge-outline truncate" title="Collection: {{ collection.title }}">
+                  <i class="bi bi-collection mr-1"></i> <span class="truncate">{{ collection.title }}</span>
+                </div>
+              {% endwith %}
+            {% elif collections_count > 1 %}
+              <div class="badge badge-sm badge-outline text-yellow-600 border-yellow-600 truncate" title="Item belongs to many collections">
+                <i class="bi bi-collection-fill mr-1"></i> Many Collections
+              </div>
+            {% else %}
+              <div class="badge badge-sm badge-ghost badge-outline truncate" title="Item does not belong to any collection">
+                <i class="bi bi-collection mr-1"></i> No Collection
+              </div>
+            {% endif %}
+          {% endwith %}
+        </div>
+      </div>
+
+      <div class="mt-4 text-xs">
+        <div class="grid grid-cols-2 gap-2">
+          <div class="flex items-center truncate">
+            <i class="bi bi-geo-alt text-success mr-1 flex-shrink-0"></i>
+            <span class="truncate">{{ item.location|title }}</span>
+          </div>
+          <div class="flex items-center justify-end min-w-0">
+            <i class="bi bi-hash text-success mr-1 flex-shrink-0"></i>
+            <span class="truncate max-w-[100px]">Qty: {{ item.available_quantity }}/{{ item.quantity }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </a>
+  {% if request.user.is_authenticated and request.user.userprofile.user_type == 'patron' %}
+    <div class="absolute top-2 right-2 z-10">
+      <form action="{% url 'users:add_to_wishlist' item.id %}" method="POST" style="display: inline">
+        {% csrf_token %}
+        <button class="btn btn-sm btn-ghost hover:bg-pink-500 hover:text-white text-base" type="submit"><i class="bi bi-heart-fill"></i></button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value
+  }
+  
+  function showToast(message, tag) {
+    let alertClass
+    if (tag === 'success') {
+      alertClass = 'alert alert-success text-white'
+    } else if (tag === 'error') {
+      alertClass = 'alert alert-error text-white'
+    } else if (tag === 'warning') {
+      alertClass = 'alert alert-warning text-white'
+    } else {
+      alertClass = 'alert alert-info text-white'
+    }
+  
+    let toastContainer = document.querySelector('.toast')
+    if (!toastContainer) {
+      toastContainer = document.createElement('div')
+      toastContainer.className = 'toast toast-bottom toast-end fixed z-50 m-4'
+      document.body.appendChild(toastContainer)
+    }
+  
+    const toastAlert = document.createElement('div')
+    toastAlert.className = alertClass
+  
+    const innerDiv = document.createElement('div')
+    const span = document.createElement('span')
+    span.textContent = message
+    innerDiv.appendChild(span)
+    toastAlert.appendChild(innerDiv)
+  
+    toastContainer.appendChild(toastAlert)
+  
+    setTimeout(() => {
+      toastAlert.remove()
+      if (toastContainer.childElementCount === 0) {
+        toastContainer.remove()
+      }
+    }, 3000)
+  }
+</script>

@@ -1,0 +1,64 @@
+{% load gear_filters %}
+<div class="card bg-base-100 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col relative">
+  <a href="{% url 'gear:collection_detail' access_request.collection.id %}" class="block">
+    <figure class="aspect-[4/3] bg-gray-100 overflow-hidden flex items-center justify-center">
+      <img src="{{ access_request.collection.image.url }}" alt="{{ access_request.collection.title }}" class="max-w-full max-h-full object-contain" />
+    </figure>
+    <div class="card-body p-6 flex flex-col justify-between">
+      <div>
+        <h2 class="card-title text-lg font-bold mb-2">{{ access_request.collection.title }}</h2>
+        <p class="text-sm text-gray-600 mb-3">{{ access_request.collection.description|truncatechars:80 }}</p>
+        <div class="text-xs">
+          <span class="badge {% if access_request.status == 'pending' %}
+              
+              
+            badge-warning
+
+
+            {% elif access_request.status == 'approved' %}
+              
+              
+            badge-success
+
+
+            {% elif access_request.status == 'rejected' %}
+              
+              
+            badge-error
+
+
+            {% endif %}">
+            {{ access_request.status|capfirst }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </a>
+  {% if access_request.status == 'pending' %}
+    <div class="absolute bottom-4 right-4 z-50">
+      <label for="cancel-modal-{{ access_request.id }}" class="btn btn-outline btn-error btn-sm hover:text-white" onclick="event.stopPropagation()">Cancel</label>
+      <input type="checkbox" id="cancel-modal-{{ access_request.id }}" class="modal-toggle" />
+      <div class="modal">
+        <div class="modal-box">
+          <h3 class="font-bold text-lg">Cancel Private Collection Request</h3>
+          <p class="py-4">Are you sure you want to cancel your request for {{ access_request.collection.title }}?</p>
+          <div class="modal-action">
+            <label for="cancel-modal-{{ access_request.id }}" class="btn btn-outline">Keep Request</label>
+            <form method="POST" action="{% url 'users:cancel_private_collection_request' access_request.id %}" class="cancel-request-form disable-on-submit">
+              {% csrf_token %}
+              <button data-disable-on-submit type="submit" class="btn bg-red-500 text-white hover:bg-red-600">Cancel Request</button>
+            </form>
+          </div>
+        </div>
+        <label class="modal-backdrop" for="cancel-modal-{{ access_request.id }}"></label>
+      </div>
+    </div>
+  {% elif access_request.status == 'rejected' %}
+    <div class="absolute bottom-4 right-4 z-10">
+      <form action="{% url 'users:request_private_collection' access_request.collection.id %}" method="POST" style="display:inline;" class="disable-on-submit">
+        {% csrf_token %}
+        <button data-disable-on-submit type="submit" class="btn btn-success text-lg">Request Again <i class="bi bi-rocket-takeoff"></i></button>
+      </form>
+    </div>
+  {% endif %}
+</div>

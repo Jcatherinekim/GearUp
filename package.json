@@ -1,0 +1,17 @@
+{
+	"dependencies": {
+		"autoprefixer": "^10.4.20",
+		"bootstrap-icons": "^1.11.3",
+		"postcss": "^8.5.2"
+	},
+	"devDependencies": {
+		"@tailwindcss/forms": "^0.5.10",
+		"daisyui": "^4.12.24",
+		"tailwindcss": "^3.4.17"
+	},
+	"scripts": {
+		"build:css": "tailwindcss -i ./gearup/static/tailwind/styles.css -o ./gearup/static/tailwind/daisyui.css",
+		"watch:css": "tailwindcss -i ./gearup/static/tailwind/styles.css -o ./gearup/static/tailwind/daisyui.css --watch"
+	},
+	"packageManager": "pnpm@10.7.1+sha512.2d92c86b7928dc8284f53494fb4201f983da65f0fb4f0d40baafa5cf628fa31dae3e5968f12466f17df7e97310e30f343a648baea1b9b350685dafafffdf5808"
+}

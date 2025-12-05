@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Add Librarians
+{% endblock %}
+
+{% block content %}
+  <div class="container mx-auto max-w-4xl p-6">
+    <h1 class="text-3xl font-semibold mb-6">Add Librarians</h1>
+
+    <div class="space-y-8">
+      <div>
+        <h2 class="text-2xl font-semibold mb-4">Patrons</h2>
+        <form method="POST" enctype="multipart/form-data" class="space-y-6 disable-on-submit">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="promote" />
+
+          <div class="border border-neutral-100 bg-neutral-100 p-4 rounded-xl mb-4">
+            <div class="mb-4">
+              {% include 'components/_search.html' with placeholder='Search patrons...' class='w-25' id='patron-search' no_form=True on_search='filterPatrons' %}
+            </div>
+
+            <div id="patrons-container" class="max-h-72 overflow-y-auto pb-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {% for user in form.new_librarians.field.queryset %}
+                  <div class="user-card flex items-center p-3 bg-base-100 shadow rounded-lg cursor-pointer hover:shadow-lg transition-all duration-200">
+                    <input type="checkbox" name="new_librarians" value="{{ user.id }}" id="user_{{ user.id }}" class="hidden" />
+
+                    <div class="flex items-center w-full">
+                      <div class="flex-shrink-0">
+                        <img src="{{ user.profile_picture.url }}" alt="{{ user.name }}" class="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                      </div>
+                      <div class="ml-3 flex-grow">
+                        <p class="text-sm font-medium text-gray-900">{{ user.name }}</p>
+                        <p class="text-xs text-gray-500">{{ user.email }}</p>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <button id="promote-button" type="submit" data-disable-on-submit class="flex btn btn-success text-lg">Promote to Librarian <i class="bi bi-person-arms-up"></i></button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Demote Librarians Section -->
+      <div>
+        <h2 class="text-2xl font-semibold mb-4">Librarians</h2>
+        <form method="POST" enctype="multipart/form-data" class="space-y-6 disable-on-submit">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="demote" />
+
+          <div class="border border-neutral-100 bg-neutral-100 p-4 rounded-xl mb-4">
+            <div class="mb-4">
+              {% include 'components/_search.html' with placeholder='Search librarians...' class='w-25' id='librarian-search' no_form=True on_search='filterLibrarians' %}
+            </div>
+
+            <div id="librarians-container" class="max-h-72 overflow-y-auto pb-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {% for librarian in librarians %}
+                  <div class="librarian-card flex items-center p-3 bg-base-100 shadow rounded-lg cursor-pointer hover:shadow-lg transition-all duration-200">
+                    <input type="checkbox" name="librarians_to_demote" value="{{ librarian.id }}" id="librarian_{{ librarian.id }}" class="hidden" />
+
+                    <div class="flex items-center w-full">
+                      <div class="flex-shrink-0">
+                        <img src="{{ librarian.profile_picture.url }}" alt="{{ librarian.name }}" class="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                      </div>
+                      <div class="ml-3 flex-grow">
+                        <p class="text-sm font-medium text-gray-900">{{ librarian.name }}</p>
+                        <p class="text-xs text-gray-500">{{ librarian.email }}</p>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <button id="demote-button" type="submit" data-disable-on-submit class="flex btn btn-warning text-lg">Demote to Patron <i class="bi bi-person-down"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let debounceTimeout
+    
+    function debounce(func, wait) {
+      return function (...args) {
+        clearTimeout(debounceTimeout)
+        debounceTimeout = setTimeout(() => func(...args), wait)
+      }
+    }
+    
+    function updateCardStyles(card) {
+      const checkbox = card.querySelector('input[type="checkbox"]')
+      const nameElement = card.querySelector('.text-sm')
+      const descriptionElement = card.querySelector('.text-xs')
+    
+      if (checkbox.checked) {
+        card.classList.add('bg-primary', 'text-white')
+        card.classList.remove('bg-base-100')
+        nameElement.classList.remove('text-gray-900')
+        nameElement.classList.add('text-white')
+        descriptionElement.classList.remove('text-gray-500')
+        descriptionElement.classList.add('text-white')
+      } else {
+        card.classList.remove('bg-primary', 'text-white')
+        card.classList.add('bg-base-100')
+        nameElement.classList.remove('text-white')
+        nameElement.classList.add('text-gray-900')
+        descriptionElement.classList.remove('text-white')
+        descriptionElement.classList.add('text-gray-500')
+      }
+    }
+    
+    function filterCards(selector, query) {
+      const cards = document.querySelectorAll(selector)
+      const searchQuery = query.toLowerCase().trim()
+      let hasVisibleCards = false
+    
+      cards.forEach((card) => {
+        const name = card.querySelector('.text-sm').textContent.toLowerCase()
+        const desc = card.querySelector('.text-xs').textContent.toLowerCase()
+    
+        if (name.includes(searchQuery) || desc.includes(searchQuery)) {
+          card.style.display = 'flex'
+          hasVisibleCards = true
+        } else {
+          card.style.display = 'none'
+        }
+      })
+    
+      const container = document.querySelector(`${selector === '.librarian-card' ? '#librarians-container .grid' : '#patrons-container .grid'}`)
+      const existingMessage = container.querySelector('.no-results')
+    
+      if (!hasVisibleCards) {
+        if (!existingMessage) {
+          const message = document.createElement('p')
+          message.className = 'no-results text-gray-500 text-center py-8 col-span-2'
+          message.textContent = selector === '.librarian-card' ? 'No librarians found.' : 'No patrons found.'
+          container.appendChild(message)
+        }
+      } else if (existingMessage) {
+        existingMessage.remove()
+      }
+    }
+    
+    function filterPatrons(query) {
+      filterCards('.user-card', query)
+    }
+    
+    function filterLibrarians(query) {
+      filterCards('.librarian-card', query)
+    }
+    
+    function updateButtonState(buttonId, cardSelector) {
+      const button = document.getElementById(buttonId)
+      const anyChecked = document.querySelector(`${cardSelector} input[type="checkbox"]:checked`)
+    
+      if (anyChecked) {
+        button.disabled = false
+        button.classList.remove('opacity-50', 'cursor-not-allowed')
+      } else {
+        button.disabled = true
+        button.classList.add('opacity-50', 'cursor-not-allowed')
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function () {
+      // Setup patron cards
+      document.querySelectorAll('.user-card').forEach((card) => {
+        card.addEventListener('click', () => {
+          const checkbox = card.querySelector('input[type="checkbox"]')
+          checkbox.checked = !checkbox.checked
+          updateCardStyles(card)
+          updateButtonState('promote-button', '.user-card')
+        })
+        updateCardStyles(card)
+      })
+    
+      // Setup librarian cards
+      document.querySelectorAll('.librarian-card').forEach((card) => {
+        card.addEventListener('click', () => {
+          const checkbox = card.querySelector('input[type="checkbox"]')
+          checkbox.checked = !checkbox.checked
+          updateCardStyles(card)
+          updateButtonState('demote-button', '.librarian-card')
+        })
+        updateCardStyles(card)
+      })
+    
+      // Setup search handlers
+      const patronSearch = document.getElementById('patron-search')
+      if (patronSearch) {
+        patronSearch.addEventListener(
+          'input',
+          debounce((e) => {
+            filterPatrons(e.target.value)
+          }, 300)
+        )
+      }
+    
+      const librarianSearch = document.getElementById('librarian-search')
+      if (librarianSearch) {
+        librarianSearch.addEventListener(
+          'input',
+          debounce((e) => {
+            filterLibrarians(e.target.value)
+          }, 300)
+        )
+      }
+    
+      // Initialize button states
+      updateButtonState('promote-button', '.user-card')
+      updateButtonState('demote-button', '.librarian-card')
+    })
+  </script>
+{% endblock %}
